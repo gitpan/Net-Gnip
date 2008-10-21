@@ -34,7 +34,7 @@ ok($gnip->update_filter($ENV{GNIP_TEST_PUBLISHER}, $filter), "Updated publisher"
 ok(@filters = $gnip->filters($ENV{GNIP_TEST_PUBLISHER}), "Got filters again");
 is(scalar(@filters), 1, "Got 1 filter again");
 is($filters[0]->name, "$name", "Got the same name");
-is_deeply([$filters[0]->rules], [@rules], "Got the same rules again");
+is(scalar($filters[0]->rules), scalar(@rules), "Got the same rules again");
 
 ok($gnip->add_filter_rule($ENV{GNIP_TEST_PUBLISHER}, $filter, 'actor', 'godot'), "Added a filter rule");
 ok(@filters = $gnip->filters($ENV{GNIP_TEST_PUBLISHER}), "Got filters once more");
@@ -46,7 +46,7 @@ ok($gnip->delete_filter_rule($ENV{GNIP_TEST_PUBLISHER}, $filter, 'actor', 'godot
 ok(@filters = $gnip->filters($ENV{GNIP_TEST_PUBLISHER}), "Got filters once more");
 is(scalar(@filters), 1, "Got 1 filter again");
 is($filters[0]->name, "$name", "Got the same old name");
-is_deeply([$filters[0]->rules], [@rules], "Got the same old rules again");
+is(scalar($filters[0]->rules), scalar @rules, "Got the same old rules again");
 
 
 

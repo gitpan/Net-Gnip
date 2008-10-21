@@ -1,3 +1,9 @@
+v0.3 2008-10-19
+- Don't pollute DateTime namespace
+- Change the way errors are returned
+- Honour environment variables for proxies
+- Change agent string
+
 v0.2 2008-10-18
 - Port to second version of Gnip API
 

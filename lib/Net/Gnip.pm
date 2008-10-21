@@ -10,9 +10,7 @@ use Net::Gnip::ActivityStream;
 use Net::Gnip::FilterStream;
 use Net::Gnip::PublisherStream;
 
-#use Net::Gnip::Response;
-
-our $VERSION = "0.2";
+our $VERSION = "0.3";
 
 use constant GNIP_BASE_ADDRESS => 'prod.gnipcentral.com';
 use constant GNIP_BASE_URL     => 'https://'.GNIP_BASE_ADDRESS;
@@ -154,7 +152,7 @@ sub fetch {
         $file             = "${time_string}.xml";
     }
     my $url = $self->GNIP_BASE_URL."/".$path."/".$file;
-    my $xml = $self->get($url);
+    my $xml = $self->get($url) || return;
     return Net::Gnip::ActivityStream->parse($xml, _no_dt => $self->{_no_dt});
 }
 
@@ -197,7 +195,7 @@ sub filters {
     my $self      = shift;
     my $publisher = shift;
     my $url       = $self->GNIP_BASE_URL."/publishers/$publisher/filters.xml";
-    my $xml       = $self->get($url);
+    my $xml       = $self->get($url) || return;
     return Net::Gnip::FilterStream->parse($xml)->filters;
 }
 
@@ -224,7 +222,8 @@ Returns a C<Net::Gnip::Filter> object.
 =cut
 sub get_filter {
     my $self = shift;
-    return Net::Gnip::Filter->parse($self->_filter_method('get', @_));
+    my $xml  = $self->_filter_method('get', @_) || return;
+    return Net::Gnip::Filter->parse($xml);
 }
 
 =head2 update_filter <publisher name> <filter>
@@ -304,7 +303,7 @@ sub publishers {
 
    my $url = $self->GNIP_BASE_URL."/publishers.xml";
 
-   my $xml = $self->get($url) || return undef;
+   my $xml = $self->get($url) || return;
    return map { $_->name } Net::Gnip::PublisherStream->parse($xml)->publishers;
 }
 
@@ -314,7 +313,7 @@ sub publishers {
 
 Takes one or more C<Net::Gnip::Publisher> objects and creates them.
 
-Returns 1 on success or dies on failure.
+Returns 1 on success and undef on failure (and sets C<$@>)
 
 =cut
 sub create_publisher {
@@ -331,6 +330,8 @@ sub create_publisher {
 Does an HTTP GET request of the passed in C<url>, and returns 
 the result from the server.
 
+Returns undef on failure (and sets C<$@>)
+
 =cut
 
 sub get {
@@ -342,6 +343,8 @@ sub get {
 
 Does a HTTP POST request of the passed in url and data object, and returns 
 the result from the server.
+
+Returns undef on failure (and sets C<$@>)
 
 =cut
 
@@ -359,8 +362,8 @@ sub _do_http {
     if ($response->is_success) {
         return $response->content;
     } else {
-        return if 404 == $response->code;
-        die("Failed to $type $url ".$response->status_line."\n\n".$response->as_string);
+        $@ = "Failed to $type $url ".$response->status_line."\n\n".$response->as_string;
+        return;
     }
 }
 
@@ -368,6 +371,9 @@ sub _do_request {
     my $self = shift;
     my ($auth, $type, $url, $data) = @_;
     my $agent = $self->{_agent} ||= LWP::UserAgent->new;
+    # Load proxy settings from *_proxy environment variables
+    $agent->env_proxy;
+    $agent->agent(__PACKAGE__."-".$VERSION);
     my $request = HTTP::Request->new($type => $url);
     $request->authorization_basic($self->{_username}, $self->{_password}) if $auth;
     if (defined $data) {
@@ -383,6 +389,8 @@ sub _do_request {
 Does an HTTP PUT request of the passed in url and data object, and returns
 the result from the server.
 
+Returns undef on failure (and sets C<$@>)
+
 =cut
 
 sub put {
@@ -394,6 +402,8 @@ sub put {
 
 Does a HTTP Delete request of the passed in url and returns
 the result from the server.
+
+Returns undef on failure (and sets C<$@>)
 
 =cut
 
@@ -464,7 +474,5 @@ Copyright 2008, Simon Wistow
 Release under the same terms as Perl itself.
 
 =cut
-
-
 1;
 

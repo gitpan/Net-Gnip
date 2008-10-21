@@ -230,21 +230,11 @@ sub as_xml {
 sub _handle_datetime {
     my $self  = shift;
     my $dt    = shift;
-    my $class = 'DateTime::Format::XML';
 
     if (ref $dt && $dt->isa('DateTime')) {
-        $class->format_datetime($dt) 
+        return $dt->strftime("%FT%H:%M:%SZ")
     } else {
-        $class->parse_datetime($dt) 
+        return DateTime::Format::ISO8601->parse_datetime($dt) 
     }
 }
-package DateTime::Format::XML;
-use base qw(DateTime::Format::ISO8601);
-
-sub format_datetime {
-    my $class = shift;
-    my $dt    = shift;
-    $dt->strftime("%FT%H:%M:%SZ");
-}
-
 1;
